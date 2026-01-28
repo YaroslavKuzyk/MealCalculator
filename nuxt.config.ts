@@ -6,6 +6,19 @@ export default defineNuxtConfig({
     '@vite-pwa/nuxt',
   ],
 
+  app: {
+    head: {
+      link: [
+        { rel: 'apple-touch-icon', href: '/apple-touch-icon.png', sizes: '180x180' },
+      ],
+      meta: [
+        { name: 'apple-mobile-web-app-capable', content: 'yes' },
+        { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' },
+        { name: 'apple-mobile-web-app-title', content: 'Calories' },
+      ],
+    },
+  },
+
   shadcn: {
     prefix: '',
     componentDir: '@/components/ui',
