@@ -1,0 +1,23 @@
+services:
+  meal:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: meal-app
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+    volumes:
+      - meal_data:/app/data
+    networks:
+      - ecommerce
+
+# Connect to shared network from e-commerce
+networks:
+  ecommerce:
+    external: true
+    name: ecommerce-network
+
+volumes:
+  meal_data:
+    driver: local
