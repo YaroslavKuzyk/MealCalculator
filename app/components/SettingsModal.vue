@@ -13,19 +13,62 @@ const emit = defineEmits<{
   saved: []
 }>()
 
-const { updateCalorieGoal } = useAuth()
+const { updateCalorieGoal, changePassword } = useAuth()
 
 const localCalorieGoal = ref(props.calorieGoal)
 const goals = ref<Array<{ id: number; title: string }>>([])
 const newGoalTitle = ref('')
 
+const currentPassword = ref('')
+const newPassword = ref('')
+const confirmPassword = ref('')
+const passwordError = ref('')
+const passwordSuccess = ref(false)
+const passwordSaving = ref(false)
+
 watch(() => props.open, async (open) => {
   if (open) {
     localCalorieGoal.value = props.calorieGoal
+    currentPassword.value = ''
+    newPassword.value = ''
+    confirmPassword.value = ''
+    passwordError.value = ''
+    passwordSuccess.value = false
     const data = await $fetch<Array<{ id: number; title: string }>>('/api/goals')
     goals.value = data
   }
 })
+
+const savePassword = async () => {
+  passwordError.value = ''
+  passwordSuccess.value = false
+
+  if (!currentPassword.value || !newPassword.value) {
+    passwordError.value = 'Заповніть усі поля'
+    return
+  }
+  if (newPassword.value.length < 6) {
+    passwordError.value = 'Новий пароль має містити щонайменше 6 символів'
+    return
+  }
+  if (newPassword.value !== confirmPassword.value) {
+    passwordError.value = 'Паролі не співпадають'
+    return
+  }
+
+  passwordSaving.value = true
+  try {
+    await changePassword(currentPassword.value, newPassword.value)
+    passwordSuccess.value = true
+    currentPassword.value = ''
+    newPassword.value = ''
+    confirmPassword.value = ''
+  } catch (e: any) {
+    passwordError.value = e?.data?.message || 'Не вдалося змінити пароль'
+  } finally {
+    passwordSaving.value = false
+  }
+}
 
 const saveCalorieGoal = async () => {
   await updateCalorieGoal(localCalorieGoal.value)
@@ -123,6 +166,48 @@ const deleteGoal = async (id: number) => {
               @click="addGoal"
             >
               <Plus class="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        <!-- Change Password -->
+        <div class="mt-6 pt-6 border-t">
+          <h3 class="text-sm font-medium mb-2">Зміна пароля</h3>
+
+          <div class="space-y-2">
+            <input
+              v-model="currentPassword"
+              type="password"
+              autocomplete="current-password"
+              placeholder="Поточний пароль"
+              class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            />
+            <input
+              v-model="newPassword"
+              type="password"
+              autocomplete="new-password"
+              placeholder="Новий пароль"
+              class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            />
+            <input
+              v-model="confirmPassword"
+              type="password"
+              autocomplete="new-password"
+              placeholder="Повторіть новий пароль"
+              class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              @keyup.enter="savePassword"
+            />
+
+            <p v-if="passwordError" class="text-sm text-destructive">{{ passwordError }}</p>
+            <p v-if="passwordSuccess" class="text-sm text-green-600">Пароль успішно змінено</p>
+
+            <button
+              type="button"
+              :disabled="passwordSaving"
+              class="inline-flex items-center justify-center h-10 w-full rounded-md bg-primary text-primary-foreground font-medium hover:bg-primary/90 disabled:opacity-50"
+              @click="savePassword"
+            >
+              {{ passwordSaving ? 'Збереження...' : 'Змінити пароль' }}
             </button>
           </div>
         </div>

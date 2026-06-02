@@ -3,16 +3,15 @@ import { db } from '../db'
 import { meals } from '../db/schema'
 import { requireAuth } from '../utils/auth'
 
-export default defineEventHandler((event) => {
-  const user = requireAuth(event)
+export default defineEventHandler(async (event) => {
+  const user = await requireAuth(event)
 
   const query = getQuery(event)
   const date = query.date as string || new Date().toISOString().split('T')[0]
 
-  const userMeals = db.select()
+  const userMeals = await db.select()
     .from(meals)
     .where(and(eq(meals.userId, user.id), eq(meals.date, date)))
-    .all()
 
   const totals = userMeals.reduce(
     (acc, meal) => ({

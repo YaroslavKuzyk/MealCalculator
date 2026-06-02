@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm'
 import { db } from '../../db'
 import { users } from '../../db/schema'
-import { generateSessionId, setSession } from '../../utils/auth'
+import { generateSessionId, setSession, verifyPassword } from '../../utils/auth'
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
@@ -14,10 +14,9 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const user = db.select().from(users).where(eq(users.email, email)).get()
-  const hashedPassword = Buffer.from(password).toString('base64')
+  const [user] = await db.select().from(users).where(eq(users.email, email))
 
-  if (!user || user.password !== hashedPassword) {
+  if (!user || !verifyPassword(password, user.password)) {
     throw createError({
       statusCode: 401,
       message: 'Невірні дані',

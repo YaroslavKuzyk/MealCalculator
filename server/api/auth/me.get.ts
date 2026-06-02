@@ -1,7 +1,7 @@
 import { getUserFromEvent } from '../../utils/auth'
 
-export default defineEventHandler((event) => {
-  const user = getUserFromEvent(event)
+export default defineEventHandler(async (event) => {
+  const user = await getUserFromEvent(event)
   if (!user) {
     throw createError({
       statusCode: 401,

@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm'
 import { db } from '../../db'
 import { users } from '../../db/schema'
-import { generateSessionId, setSession } from '../../utils/auth'
+import { generateSessionId, setSession, hashPassword } from '../../utils/auth'
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
@@ -14,7 +14,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const existing = db.select().from(users).where(eq(users.email, email)).get()
+  const [existing] = await db.select().from(users).where(eq(users.email, email))
   if (existing) {
     throw createError({
       statusCode: 400,
@@ -22,12 +22,10 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const hashedPassword = Buffer.from(password).toString('base64')
-
-  const result = db.insert(users).values({
+  const [result] = await db.insert(users).values({
     email,
-    password: hashedPassword,
-  }).returning().get()
+    password: hashPassword(password),
+  }).returning()
 
   const sessionId = generateSessionId()
   setSession(sessionId, result.id)

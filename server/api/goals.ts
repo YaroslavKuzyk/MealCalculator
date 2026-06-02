@@ -4,11 +4,11 @@ import { goals, dailyGoals } from '../db/schema'
 import { requireAuth } from '../utils/auth'
 
 export default defineEventHandler(async (event) => {
-  const user = requireAuth(event)
+  const user = await requireAuth(event)
   const method = event.method
 
   if (method === 'GET') {
-    return db.select().from(goals).where(eq(goals.userId, user.id)).all()
+    return await db.select().from(goals).where(eq(goals.userId, user.id))
   }
 
   if (method === 'POST') {
@@ -21,18 +21,20 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    return db.insert(goals).values({
+    const [goal] = await db.insert(goals).values({
       userId: user.id,
       title,
-    }).returning().get()
+    }).returning()
+
+    return goal
   }
 
   if (method === 'DELETE') {
     const query = getQuery(event)
     const id = Number(query.id)
 
-    db.delete(dailyGoals).where(eq(dailyGoals.goalId, id)).run()
-    db.delete(goals).where(and(eq(goals.id, id), eq(goals.userId, user.id))).run()
+    await db.delete(dailyGoals).where(eq(dailyGoals.goalId, id))
+    await db.delete(goals).where(and(eq(goals.id, id), eq(goals.userId, user.id)))
 
     return { success: true }
   }

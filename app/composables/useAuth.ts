@@ -54,6 +54,13 @@ export function useAuth() {
     }
   }
 
+  const changePassword = async (currentPassword: string, newPassword: string) => {
+    await $fetch('/api/auth/change-password', {
+      method: 'POST',
+      body: { currentPassword, newPassword },
+    })
+  }
+
   return {
     user,
     isLoading,
@@ -62,5 +69,6 @@ export function useAuth() {
     register,
     logout,
     updateCalorieGoal,
+    changePassword,
   }
 }

@@ -7,17 +7,40 @@ services:
     restart: unless-stopped
     environment:
       - NODE_ENV=production
-    volumes:
-      - meal_data:/app/data
+      - DATABASE_URL=postgres://${POSTGRES_USER:-meal}:${POSTGRES_PASSWORD:-meal}@meal-db:5432/${POSTGRES_DB:-meal}
+    depends_on:
+      meal-db:
+        condition: service_healthy
     networks:
       - ecommerce
+      - meal-internal
+
+  meal-db:
+    image: postgres:16-alpine
+    container_name: meal-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-meal}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-meal}
+      - POSTGRES_DB=${POSTGRES_DB:-meal}
+    volumes:
+      - meal_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-meal} -d ${POSTGRES_DB:-meal}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - meal-internal
 
 # Connect to shared network from e-commerce
 networks:
   ecommerce:
     external: true
     name: ecommerce-network
+  meal-internal:
+    driver: bridge
 
 volumes:
-  meal_data:
+  meal_db_data:
     driver: local

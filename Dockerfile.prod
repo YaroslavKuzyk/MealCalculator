@@ -23,9 +23,6 @@ WORKDIR /app
 # Copy built application
 COPY --from=builder /app/.output /app/.output
 
-# Create directory for SQLite database
-RUN mkdir -p /app/data
-
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0
 ENV PORT=3000
